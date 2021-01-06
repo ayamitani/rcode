@@ -1,0 +1,48 @@
+---
+title: "Useful R code"
+author: "Aya Mitani"
+date: "06/01/2021"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    highlight: haddock
+---
+
+## Special characters in ggplot labels
+
+This is the code I used to create one of the figures in the manuscript "Accounting for drop-out using inverse probability censoring weights in longitudinal clustered data with informative cluster size".
+
+```{r, echo = FALSE}
+library(here)
+allscens <- read.table(here("data", "allscens.txt"), header = TRUE)
+```
+
+
+```{r, fig.height=3, fig.width=10}
+library(ggplot2)
+
+themin <- min(allscens$value)
+themax <- max(allscens$value)
+
+# create labels for the factor variable
+allscens$varlab <- factor(allscens$var, levels = c("alpha30", "alpha3-1", "alpha3-2"),
+                          ordered = TRUE, labels=c("alpha[3] == 0", "alpha[3] == -1", "alpha[3] == -2"))
+
+allscens$xnum <- factor(allscens$truth, levels = c("-2","-1.5","-1","-0.5","0"))
+
+p <- ggplot(allscens, aes(x=xnum, y=value, fill=variable)) + 
+  geom_boxplot() + 
+  geom_hline(yintercept = 0, linetype = "longdash") +
+  # bquote can also be used to mix special characters and text
+  labs(y = "Relative bias", x =  bquote(alpha[1]~values)) + 
+  theme_bw() +
+  facet_wrap(~ varlab, scales = "free", labeller = label_parsed) +
+  scale_fill_grey(start = 1, end = 0.4, 
+                  name="Method",
+                  breaks=c("ccbeta3relbias", "cwbeta3relbias", "bbdcwbeta3relbias", "rrzcwbeta3relbias"),
+                  labels=c("CCGEE", "CWGEE", "DWGEE", "IPC-CWGEE")) +
+  scale_y_continuous(limits = c(themin, themax)) 
+p
+```
